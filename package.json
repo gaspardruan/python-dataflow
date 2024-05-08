@@ -1,18 +1,15 @@
 {
-  "name": "pkg-placeholder",
+  "name": "python-dataflow",
   "type": "module",
-  "version": "0.0.0",
-  "packageManager": "pnpm@9.0.2",
-  "description": "_description_",
+  "version": "0.0.1",
+  "description": "Dataflow analysis of python program",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
   "license": "MIT",
-  "funding": "https://github.com/sponsors/antfu",
-  "homepage": "https://github.com/antfu/pkg-placeholder#readme",
+  "homepage": "https://github.com/gaspardruan/python-dataflow#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/antfu/pkg-placeholder.git"
+    "url": "git+https://github.com/gaspardruan/python-dataflow.git"
   },
-  "bugs": "https://github.com/antfu/pkg-placeholder/issues",
   "keywords": [],
   "sideEffects": false,
   "exports": {
@@ -56,7 +53,6 @@
     "eslint": "^9.0.0",
     "esno": "^4.7.0",
     "lint-staged": "^15.2.2",
-    "pnpm": "^9.0.2",
     "rimraf": "^5.0.5",
     "simple-git-hooks": "^2.11.1",
     "typescript": "^5.4.5",
