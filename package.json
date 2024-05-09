@@ -1,7 +1,7 @@
 {
   "name": "python-dataflow",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "packageManager": "pnpm@9.1.0",
   "description": "Dataflow analysis of python program",
   "author": "Anthony Fu <anthonyfu117@hotmail.com>",
