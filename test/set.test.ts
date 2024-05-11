@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Set } from '../src';
+import { Set } from '../src/set';
 
 interface Person {
   name: string;
