@@ -5,6 +5,7 @@ export default antfu(
   {
     ignores: [
       // eslint ignore globs here
+      'node_modules',
     ],
     stylistic: {
       semi: true,
