@@ -15,6 +15,7 @@ export default antfu(
     rules: {
       // overrides
       'style/max-len': ['warn', 120],
+      'no-console': 'off',
     },
   },
 );
