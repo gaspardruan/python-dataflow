@@ -25,7 +25,7 @@ export class Set<T> {
   public pop(): T {
     if (this.empty)
       throw new Error('cannot pop from an empty set');
-    const someKey = Object.keys(this._items)[0];
+    const someKey = Object.keys(this._items)[-1];
     const result = this._items[someKey];
     this.remove(result);
     return result;
@@ -93,7 +93,7 @@ export class Set<T> {
     if (this.empty)
       throw new Error('cannot take from an empty set');
 
-    const first = Number.parseInt(Object.keys(this._items)[0]);
+    const first = Object.keys(this._items)[0];
     const result = this._items[first];
     this.remove(result);
     return result;

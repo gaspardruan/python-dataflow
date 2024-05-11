@@ -90,6 +90,13 @@ describe('set', () => {
     const set1 = new Set<Person>(getIdentifier).union(set);
     const p = set1.pop();
     expect(set1.size).toBe(1);
+    expect(p).toEqual({ name: 'Bob', age: 30 });
+  });
+
+  it('take', () => {
+    const set1 = new Set<Person>(getIdentifier).union(set);
+    const p = set1.take();
+    expect(set1.size).toBe(1);
     expect(p).toEqual({ name: 'Alice', age: 20 });
   });
 
