@@ -25,7 +25,7 @@ export class Set<T> {
   public pop(): T {
     if (this.empty)
       throw new Error('cannot pop from an empty set');
-    const someKey = Object.keys(this._items)[-1];
+    const someKey = Object.keys(this._items).at(-1)!;
     const result = this._items[someKey];
     this.remove(result);
     return result;

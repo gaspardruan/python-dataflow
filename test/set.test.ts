@@ -54,7 +54,7 @@ describe('set', () => {
     const set2 = set.intersect(set1);
     expect(set2.items).toEqual([person1]);
 
-    set1.pop();
+    set1.take();
     const set3 = set.intersect(set1);
     expect(set3.empty).toBe(true);
   });
@@ -90,7 +90,7 @@ describe('set', () => {
     const set1 = new Set<Person>(getIdentifier).union(set);
     const p = set1.pop();
     expect(set1.size).toBe(1);
-    expect(p).toEqual({ name: 'Bob', age: 30 });
+    expect(p).toEqual(person2);
   });
 
   it('take', () => {
