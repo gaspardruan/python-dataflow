@@ -428,4 +428,203 @@ export class ControlFlowGraph {
     str.push('=================================');
     return str.join('\n');
   }
+
+  private postdominators = new PostdominatorSet();
+  private immediatePostdominators: PostdominatorSet = new PostdominatorSet();
+  private reverseDominanceFrontiers: { [blockId: string]: BlockSet } = {};
+
+  public visitControlDependencies(visit: (controlStmt: SyntaxNode, stmt: SyntaxNode) => void) {
+    const blocks = this.blocks;
+
+    this.postdominators = this.findPostdominators(blocks);
+    this.immediatePostdominators = this.getImmediatePostdominators(
+      this.postdominators.items,
+    );
+    this.reverseDominanceFrontiers = this.buildReverseDominanceFrontiers(blocks);
+
+    for (const block of blocks) {
+      if (Object.prototype.hasOwnProperty.call(this.reverseDominanceFrontiers, block.id.toString())) {
+        const frontiers = this.reverseDominanceFrontiers[block.id];
+        for (const frontier of frontiers.items) {
+          for (const stmt of frontier.statements)
+            visit(frontier.statements[0], stmt);
+        }
+      }
+    }
+  }
+
+  private postdominatorExists(block: Block, postdominator: Block): boolean {
+    return (
+      this.postdominators.filter(
+        p => p.block === block && p.postdominator === postdominator,
+      ).size > 0
+    );
+  }
+
+  private getImmediatePostdominator(block: Block): Postdominator {
+    const immediatePostdominators = this.immediatePostdominators.items.filter(
+      p => p.block === block,
+    );
+    return immediatePostdominators[0];
+  }
+
+  /**
+   * Merge postdominators that appear in all of a block's successors.
+   */
+  private produceNewPostdominators(
+    successors: Block[],
+    postdominators: { [blockId: number]: PostdominatorSet },
+    block: Block,
+  ) {
+    const arr: Postdominator[] = [];
+    return new PostdominatorSet(
+      ...arr
+        .concat(...successors.map(s => postdominators[s.id].items))
+        .reduce((pCounts: { p: Postdominator; count: number }[], p) => {
+          const countIndex = pCounts.findIndex((record) => {
+            return record.p.postdominator === p.postdominator;
+          });
+          let countRecord;
+          if (countIndex === -1) {
+            countRecord = {
+              p: new Postdominator(p.distance + 1, block, p.postdominator),
+              count: 0,
+            };
+            pCounts.push(countRecord);
+          }
+          else {
+            countRecord = pCounts[countIndex];
+            pCounts[countIndex].p.distance = Math.min(
+              pCounts[countIndex].p.distance,
+              p.distance + 1,
+            );
+          }
+          countRecord.count++;
+          return pCounts;
+        }, [])
+        .filter((p: { p: Postdominator; count: number }) => {
+          return p.count === successors.length;
+        })
+        .map((p: { p: Postdominator; count: number }) => {
+          return p.p;
+        }),
+    );
+  }
+
+  private findPostdominators(blocks: Block[]) {
+    // Initially, every block has every other block as a postdominator, except for the last block.
+    const postdominators: { [blockId: number]: PostdominatorSet } = {};
+    for (const block of blocks) {
+      postdominators[block.id] = new PostdominatorSet();
+      for (const otherBlock of blocks) {
+        const distance = block === otherBlock ? 0 : Number.POSITIVE_INFINITY;
+        postdominators[block.id].add(new Postdominator(distance, block, otherBlock));
+      }
+    }
+    const lastBlock = blocks.filter(b => this.getSuccessors(b).length === 0)[0];
+    postdominators[lastBlock.id] = new PostdominatorSet(
+      new Postdominator(0, lastBlock, lastBlock),
+    );
+
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const block of blocks) {
+        if (block === lastBlock)
+          continue;
+
+        const oldPostdominators = postdominators[block.id];
+        const successors = this.getSuccessors(block);
+        const newPostdominators = this.produceNewPostdominators(successors, postdominators, block);
+        // A block always postdominates itself.
+        newPostdominators.add(new Postdominator(0, block, block));
+
+        if (!oldPostdominators.equals(newPostdominators)) {
+          postdominators[block.id] = newPostdominators;
+          changed = true;
+        }
+      }
+    }
+
+    let result = new PostdominatorSet();
+    Object.keys(postdominators).forEach((blockId) => {
+      result = result.union(postdominators[Number.parseInt(blockId)]);
+    });
+    return result;
+  }
+
+  private getImmediatePostdominators(postdominators: Postdominator[]) {
+    const postdominatorsByBlock: { [blockId: number]: Postdominator[] }
+      = postdominators.filter(p => p.block !== p.postdominator)
+        .reduce((dict: { [blockId: number]: Postdominator[] }, postdominator) => {
+          if (!Object.prototype.hasOwnProperty.call(dict, postdominator.block.id))
+            dict[postdominator.block.id] = [];
+          dict[postdominator.block.id].push(postdominator);
+          return dict;
+        }, {});
+    const immediatePostdominators: Postdominator[] = [];
+    Object.keys(postdominatorsByBlock).forEach((blockId) => {
+      immediatePostdominators.push(
+        postdominatorsByBlock[Number.parseInt(blockId)].sort((a, b) => {
+          return a.distance - b.distance;
+        })[0],
+      );
+    });
+    return new PostdominatorSet(...immediatePostdominators);
+  }
+
+  private buildReverseDominanceFrontiers(blocks: Block[]) {
+    const frontiers: { [blockId: string]: BlockSet } = {};
+    for (const block of blocks) {
+      const successors = this.getSuccessors(block);
+      if (successors.length > 1) {
+        const workQueue = successors;
+        const scheduled: Block[] = [];
+        const blockImmediatePostdominator = this.getImmediatePostdominator(block);
+        while (workQueue.length > 0) {
+          const item = workQueue.pop()!;
+          if (this.postdominatorExists(block, item))
+            continue;
+          if (!Object.prototype.hasOwnProperty.call(frontiers, item.id))
+            frontiers[item.id] = new BlockSet();
+          frontiers[item.id].add(block);
+          const immediatePostdominator = this.getImmediatePostdominator(item);
+          if (immediatePostdominator.postdominator !== blockImmediatePostdominator.block) {
+            this.getSuccessors(item).forEach((b) => {
+              if (!scheduled.includes(b)) {
+                scheduled.push(b);
+                workQueue.push(b);
+              }
+            });
+          }
+        }
+      }
+    }
+    return frontiers;
+  }
+}
+
+/**
+ * A block and another block that postdominates it. Distance is the length of the longest path
+ * from the block to its postdominator.
+ */
+class Postdominator {
+  constructor(distance: number, block: Block, postdominator: Block) {
+    this.distance = distance;
+    this.block = block;
+    this.postdominator = postdominator;
+  }
+
+  distance: number;
+  block: Block;
+  postdominator: Block;
+}
+
+/**
+ * A set of postdominators
+ */
+class PostdominatorSet extends Set<Postdominator> {
+  constructor(...items: Postdominator[]) {
+    super(p => `${p.block.id},${p.postdominator.id}`, ...items);
+  }
 }
