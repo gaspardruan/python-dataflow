@@ -341,6 +341,7 @@ export class ControlFlowGraph {
     return afterTry;
   }
 
+  // TODO: break and continue are not handled correctly
   private makeCFG(hint: string, statements: SyntaxNode[], context: Context): [Block, Block] {
     if (!hint)
       throw new Error('hint undefined');
