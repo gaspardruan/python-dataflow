@@ -192,6 +192,55 @@ BLOCK 12 (elif body)
   SUCC: 6,10
 =================================`;
 
+const dfCode = `ans = input()
+while ans != "yes":
+  if ans.startswith("y"):
+    print("You mean yes?")
+  elif ans.startswith("n"):
+    print("You mean no?")
+  else:
+    print("I don't understand")
+  ans = input()
+print("Goodbye")`;
+
+const dfCFG = `============== CFG ==============
+CFG ENTRY: 1 EXIT: 3
+BLOCK 1 (entry)
+  0: ans = input()
+  SUCC: 2
+BLOCK 2 (while loop head)
+  1: ans != "yes"
+  SUCC: 4,3
+BLOCK 3 (while loop join)
+  9: print("Goodbye")
+  EXIT
+BLOCK 4 (while body)
+
+  SUCC: 5
+BLOCK 5 (if condition)
+  2: ans.startswith("y")
+  SUCC: 6,8
+BLOCK 6 (if body)
+  3: print("You mean yes?")
+  SUCC: 7
+BLOCK 7 (conditional joint)
+  8: ans = input()
+  SUCC: 2
+BLOCK 8 (elif condition)
+  4: ans.startswith("n")
+  SUCC: 9,10
+BLOCK 9 (elif body)
+  5: print("You mean no?")
+  SUCC: 7
+BLOCK 10 (else condition)
+  6: else:
+    print("I don't understand")
+  SUCC: 11,7
+BLOCK 11 (else body)
+  7: print("I don't understand")
+  SUCC: 7
+=================================`;
+
 describe('control-flow', () => {
   describe('while', () => {
     it('parse while statement', () => {
@@ -238,6 +287,25 @@ describe('control-flow', () => {
       const tree = parse(jumpCode);
       const cfg = new ControlFlowGraph(tree.rootNode);
       expect(cfg.toString()).toBe(jumpCFG);
+    });
+  });
+
+  describe('dominance frontiers', () => {
+    it('compute dominance frontiers', () => {
+      const tree = parse(dfCode);
+      const cfg = new ControlFlowGraph(tree.rootNode);
+      const frontiers = cfg.getDominanceFrontiers();
+      expect(cfg.toString()).toBe(dfCFG);
+      expect(frontiers).toEqual({
+        4: [2],
+        5: [2],
+        6: [2, 5],
+        7: [2],
+        8: [2, 5],
+        9: [2, 5, 8],
+        10: [2, 5, 8],
+        11: [2, 5, 8, 10],
+      });
     });
   });
 });
