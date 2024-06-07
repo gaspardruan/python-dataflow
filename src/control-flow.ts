@@ -433,24 +433,41 @@ export class ControlFlowGraph {
   private immediatePostdominators: PostdominatorSet = new PostdominatorSet();
   private reverseDominanceFrontiers: { [blockId: string]: BlockSet } = {};
 
-  public visitControlDependencies(visit: (controlStmt: SyntaxNode, stmt: SyntaxNode) => void) {
-    const blocks = this.blocks;
+  private initDominaceFrontiers() {
+    if (Object.keys(this.reverseDominanceFrontiers).length > 0)
+      return;
 
+    const blocks = this.blocks;
     this.postdominators = this.findPostdominators(blocks);
     this.immediatePostdominators = this.getImmediatePostdominators(
       this.postdominators.items,
     );
     this.reverseDominanceFrontiers = this.buildReverseDominanceFrontiers(blocks);
+  }
 
-    for (const block of blocks) {
-      if (Object.prototype.hasOwnProperty.call(this.reverseDominanceFrontiers, block.id.toString())) {
+  public visitControlDependencies(visit: (controlStmt: SyntaxNode, stmt: SyntaxNode) => void) {
+    this.initDominaceFrontiers();
+
+    for (const block of this.blocks) {
+      if (Object.prototype.hasOwnProperty.call(this.reverseDominanceFrontiers, block.id)) {
         const frontiers = this.reverseDominanceFrontiers[block.id];
-        for (const frontier of frontiers.items) {
-          for (const stmt of frontier.statements)
-            visit(frontier.statements[0], stmt);
+        for (const frontierBlock of frontiers.items) {
+          for (const controlStmt of frontierBlock.statements) {
+            for (const stmt of block.statements)
+              visit(controlStmt, stmt);
+          }
         }
       }
     }
+  }
+
+  public getDominanceFrontiers(): { [blockId: string]: number[] } {
+    this.initDominaceFrontiers();
+    const result: { [blockId: string]: number[] } = {};
+    Object.keys(this.reverseDominanceFrontiers).forEach((blockId) => {
+      result[blockId] = this.reverseDominanceFrontiers[blockId].items.map(b => b.id);
+    });
+    return result;
   }
 
   private postdominatorExists(block: Block, postdominator: Block): boolean {
