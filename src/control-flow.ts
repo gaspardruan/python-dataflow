@@ -32,7 +32,7 @@ export class Block {
 
   public toString(): string {
     return (
-      `Block ${this.id} (${this.hint})\n${
+      `BLOCK ${this.id} (${this.hint})\n${
       this.statements.map(s => `  ${s.startPosition.row}: ${s.text}`).join('\n')}`
     );
   }
@@ -201,14 +201,18 @@ export class ControlFlowGraph {
 
   // ugly but useful
   private buildAssignFromFor(left: SyntaxNode, right: SyntaxNode): SyntaxNode {
-    const str = `${left.text} = ${right.text}`;
+    let str = '';
+    for (let i = 0; i < left.startPosition.row; i++)
+      str += '\n';
+    for (let i = 0; i < left.startPosition.column; i++)
+      str += ' ';
+    str += left.text;
+    str += ' = ';
+    for (let i = 0; i < right.startPosition.column - 3 - left.endPosition.column; i++)
+      str += ' ';
+    str += right.text;
     // Module -> expression_statement -> assignment
     const assign = parse(str).rootNode.firstChild!.firstChild!;
-    assign.startPosition = left.startPosition;
-    assign.endPosition = right.endPosition;
-    assign.startIndex = left.startIndex;
-    assign.endIndex = right.endIndex;
-    assign.parent = left.parent;
     return assign;
   }
 
@@ -235,11 +239,17 @@ export class ControlFlowGraph {
     return afterLoop;
   }
 
+  // ugly but useful
   private buildAssignFromWith(asPatterns: SyntaxNode[]): SyntaxNode[] {
     return asPatterns.map((a) => {
       const obj = a.firstChild!;
       const name = a.lastChild!;
-      const str = `${name.text} = ${obj.text}`;
+      let str = '';
+      for (let i = 0; i < name.startPosition.row; i++)
+        str += '\n';
+      for (let i = 0; i < name.startPosition.column; i++)
+        str += ' ';
+      str += `${name.text} = ${obj.text}`;
       const tree = parse(str);
       const assign = tree.rootNode.firstChild!.firstChild!;
       assign.startPosition = a.startPosition;
@@ -417,7 +427,7 @@ export class ControlFlowGraph {
       if (block === this._exit)
         str.push('  EXIT');
       else
-        str.push(`  SUCC: ${this.getSuccessors(block).map(b => b.id.toString()).join(', ')}`);
+        str.push(`  SUCC: ${this.getSuccessors(block).map(b => b.id.toString()).join(',')}`);
     });
     str.push('=================================');
     return str.join('\n');
