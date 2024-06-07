@@ -252,11 +252,6 @@ export class ControlFlowGraph {
       str += `${name.text} = ${obj.text}`;
       const tree = parse(str);
       const assign = tree.rootNode.firstChild!.firstChild!;
-      assign.startPosition = a.startPosition;
-      assign.endPosition = a.endPosition;
-      assign.startIndex = a.startIndex;
-      assign.endIndex = a.endIndex;
-      assign.parent = a.parent;
       return assign;
     });
   }
