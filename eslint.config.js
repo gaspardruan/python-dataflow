@@ -16,6 +16,7 @@ export default antfu(
       // overrides
       'style/max-len': ['warn', 120],
       'no-console': 'off',
+      'ts/no-this-alias': ['warn', { allowDestructuring: true, allowedNames: ['toSet'] }],
     },
   },
 );
