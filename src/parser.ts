@@ -3,6 +3,7 @@ import Parser from 'tree-sitter';
 import Python from 'tree-sitter-python';
 
 import type { WalkListener } from './interface';
+import { ATTRIBUTE } from './type';
 
 export function parse(code: string): Parser.Tree {
   const parser = new Parser();
@@ -97,4 +98,18 @@ export function pointString(loc: Point) {
 // finally:
 //   print('finally')`), { onEnterNode: (node) => {
 //   console.log('Enter node:', node.id, node.type);
+// } });
+
+// walk(parse(`
+// import random
+// random_num = random.ha.randint(1, 100)
+// print(random_num)
+// `), { onEnterNode: (node) => {
+//   console.log('Enter node:', node.type, node.text);
+//   if (node.type === ATTRIBUTE) {
+//     const obj = node.childForFieldName('object')!;
+//     const name = node.childForFieldName('attribute')!;
+//     console.log('OBJ:', obj.text);
+//     console.log('NAME:', name.text);
+//   }
 // } });
