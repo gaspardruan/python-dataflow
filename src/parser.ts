@@ -1,3 +1,4 @@
+import type { Point } from 'tree-sitter';
 import Parser from 'tree-sitter';
 import Python from 'tree-sitter-python';
 
@@ -21,6 +22,10 @@ export function walk(tree: Parser.Tree, walkListener: WalkListener) {
       walkListener.onExitNode(node);
   };
   walkNode(tree.rootNode);
+}
+
+export function pointString(loc: Point) {
+  return `(${loc.row}:${loc.column})`;
 }
 
 // walk(parse(`
@@ -91,5 +96,5 @@ export function walk(tree: Parser.Tree, walkListener: WalkListener) {
 //   print('except 3')
 // finally:
 //   print('finally')`), { onEnterNode: (node) => {
-//   console.log('Enter node:', node.type);
+//   console.log('Enter node:', node.id, node.type);
 // } });
