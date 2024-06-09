@@ -3,7 +3,6 @@ import Parser from 'tree-sitter';
 import Python from 'tree-sitter-python';
 
 import type { WalkListener } from './interface';
-import { ATTRIBUTE } from './type';
 
 export function parse(code: string): Parser.Tree {
   const parser = new Parser();
